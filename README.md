@@ -2,6 +2,10 @@
 
 Goal: before the workshop starts, you can **run the app locally**, have **Cursor installed**, and have **Playwright ready**.
 
+**Workshop docs:**
+- Setup checklist: [WORKSHOP-SETUP.md](./WORKSHOP-SETUP.md)
+- Full live runbook: [WORKSHOP-WALKTHROUGH.md](./WORKSHOP-WALKTHROUGH.md)
+
 ---
 
 ## 1) Install prerequisites
@@ -61,6 +65,7 @@ npm run dev-node
 ```
 
 - [ ] Confirm the API server is running at: **http://localhost:3002**
+- [ ] Quick API check (optional but useful): open **http://localhost:3002/api/tasks** and confirm you get a JSON response
 
 **Success criteria (before you join):**
 
@@ -95,7 +100,7 @@ npx playwright install --with-deps
 - [ ] Create a folder for test files (optional):
 
 ```bash
-mkdir tests
+mkdir -p tests
 ```
 
 - [ ] Sanity check:
@@ -150,4 +155,5 @@ npx playwright --version
 - [ ] Demo repo cloned + `npm install` completed
 - [ ] UI running (`npm run dev`) and loads at **http://localhost:5173** (Tasks / Contacts / Products)
 - [ ] API running (`npm run dev-node`) at **http://localhost:3002**
+- [ ] Keep both server terminals running during workshop test execution (`npx playwright test ...`)
 - [ ] Playwright installed + browsers installed (`npx playwright --version` works)

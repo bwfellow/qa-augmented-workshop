@@ -2,6 +2,8 @@
 
 Goal: before the workshop starts, you can **run the app locally**, have **Cursor installed**, and have **Playwright ready**.
 
+**Live runbook:** The detailed 90-minute workshop with specific prompts, steps, and expected outputs is in **[WORKSHOP-WALKTHROUGH.md](./WORKSHOP-WALKTHROUGH.md)** (kickoff → codebase orientation → Playwright bootstrap → Page Object → API tests → data factory/seed → E2E → Q&A).
+
 ---
 
 ## 1) Install prerequisites

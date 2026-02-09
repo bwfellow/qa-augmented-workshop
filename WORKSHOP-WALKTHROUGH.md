@@ -1,6 +1,8 @@
 # Workshop: “Your Codebase Is About to Become Your Most Powerful Teammate”
 
-upd**This is the live runbook.** Use it during the session; pre-workshop setup (Node, Cursor, clone, run app, install Playwright) is in [WORKSHOP-SETUP.md](./WORKSHOP-SETUP.md).
+**This is your workshop companion.** Keep this doc open during the session and use it as you go: **copy and paste the prompts** into Cursor, **compare your code** to the snippets below each step, and **run the commands** when the step says to. Pre-workshop setup (Node, Cursor, clone, run app, install Playwright) is in [WORKSHOP-SETUP.md](./WORKSHOP-SETUP.md).
+
+**This doc has everything you need to run the full workshop:** every prompt to paste in Cursor, every code snippet to compare against, every test we run (smoke, add-task UI, API happy/negative, seed-3-tasks, E2E), every command (`npx playwright test ...`), and every file path. You don’t need to look elsewhere mid-session.
 
 **Duration:** 90 minutes (75 min build + 15 min Q&A)  
 **Format:** 100% live (builders + watchers welcome)  
@@ -10,104 +12,141 @@ upd**This is the live runbook.** Use it during the session; pre-workshop setup (
 
 ## 0:00–0:05 — Kickoff + Definition of Done
 
-### Facilitator checklist
+### Step 1 — Kickoff and success criteria
 
-- [ ] Welcome + state today’s goal: **codebase-first testing** with Playwright and Cursor.
+**Action:**
+
+- [ ] Welcome the group and state today’s goal: **codebase-first testing** with Playwright and Cursor.
 - [ ] **Builders:** Confirm UI and API run locally (see [WORKSHOP-SETUP.md](./WORKSHOP-SETUP.md)). **Watchers:** Follow along; you can copy the repo and run tests afterward.
-- [ ] **Success criteria** (what everyone leaves with):
+- [ ] Read aloud the **success criteria** (everyone leaves with the same outcomes):
   - One passing Playwright **smoke test** (app reachable).
-  - One **UI test** that uses a **Page Object** (e.g. add task or open a tab).
-  - At least **two API tests** (one happy path, one validation/negative).
+  - One **UI test** that uses a **Page Object** (add task on Tasks page).
+  - At least **two API tests** (one happy path, one negative) for `/api/tasks`.
   - A **data factory** + **seed helper** used by at least one test.
-  - One **end-to-end** scenario: seed via API → verify in UI → action → assert.
-- [ ] **Repo structure (30 seconds):**
-  - **Client:** `src/App.tsx`, `src/pages/*.tsx`, `src/main.tsx` — Vite dev server at **http://localhost:5173** (proxies `/api` to the API).
-  - **Server:** `src/server/index.ts` (Express), `src/server/api.ts` (Remult + entities) — API at **http://localhost:3002**.
-  - **Shared:** `src/shared/Task.ts`, `Contact.ts`, `Product.ts` — entity definitions and validation surface.
+  - One **end-to-end** scenario: seed via API → verify in UI → toggle complete → assert.
 
-**Deliverable:** Everyone knows the end state and where client vs server code lives.
+**Deliverable:** Everyone has heard the same success criteria.
+
+### Step 2 — Repo structure (everyone uses the same map)
+
+**Action:**
+
+- [ ] Tell everyone: we will use **only these paths** for the whole workshop. Point to each:
+  - **Client:** `src/App.tsx`, `src/pages/*.tsx`, `src/main.tsx` — Vite at **http://localhost:5173** (proxies `/api` to the API).
+  - **Server:** `src/server/index.ts` (Express), `src/server/api.ts` (Remult + entities) — API at **http://localhost:3002**.
+  - **Shared:** `src/shared/Task.ts`, `Contact.ts`, `Product.ts` — entity definitions and validation.
+- [ ] Do **not** add or rename these; everyone’s mental map is identical.
+
+**Deliverable:** Everyone knows the end state and the exact same file/port map.
+
+### Step 3 — Hard rule for this workshop (codebase only)
+
+**Action:**
+
+- [ ] Read aloud this rule: **“For discovery, use only the repo code + Cursor. Do not use Swagger, Postman, or browser inspector to find endpoints, payload shapes, or locators.”**
+- [ ] Tell everyone this is the core skill being practiced: extracting test truth from `src/server/*`, `src/shared/*`, and `src/pages/*`.
+
+**Deliverable:** Everyone agrees to a codebase-only workflow for discovery.
 
 ---
 
 ## 0:05–0:15 — Codebase-First Orientation (Repo as Source of Truth)
 
-Goal: Identify **where the API starts**, **where validation lives**, and **1–2 UI flows** to automate. Produce a short “Test Targets” list.
+Goal: Identify **where the API starts**, **where validation lives**, and the **exact UI flows** we will automate. Lock the “Test Targets” list so everyone tests the same things.
 
 ### Step 1 — Where the API starts and routes are registered
 
-**Prompt to use in Cursor (or say aloud):**
+**Action:**
 
-> “In this repo, where does the API server start and where are API routes registered? List the exact file paths and the port.”
+- [ ] Paste this exact prompt in Cursor (or read it aloud and have everyone paste it):  
+  **“In this repo, where does the API server start and where are API routes registered? List the exact file paths and the port.”**
+- [ ] Verify the answer includes: **Entry** `src/server/index.ts` (port **3002**); **Routes** in `src/server/api.ts` — `GET/POST /api/tasks`, `GET/POST /api/contacts`, `GET/POST /api/products` (and `/:id` for GET/PUT/DELETE). If anything is missing, ask Cursor to add the missing path or port.
 
-**Expected answer / what to show:**
-
-- **Entry:** `src/server/index.ts` — creates Express app, mounts the API, listens on port **3002**.
-- **Routes:** `src/server/api.ts` — `remultExpress({ entities: [Task, Contact, Product] })`. Remult auto-exposes REST:
-  - `GET/POST /api/tasks`, `GET/PUT/DELETE /api/tasks/:id`
-  - `GET/POST /api/contacts`, `GET/PUT/DELETE /api/contacts/:id`
-  - `GET/POST /api/products`, `GET/PUT/DELETE /api/products/:id`
+**Deliverable:** Everyone has the same answer: server entry and API routes with exact paths and port.
 
 ### Step 2 — Where data models and validation live (what can fail and why)
 
-**Prompt:**
+**Action:**
 
-> “Where are the data models for Task, Contact, and Product defined? What fields are required or have constraints that could make API or form submission fail?”
+- [ ] Paste this exact prompt in Cursor:  
+  **“Where are the data models for Task, Contact, and Product defined? What fields are required or have constraints that could make API or form submission fail?”**
+- [ ] Verify the answer names **files** `src/shared/Task.ts`, `Contact.ts`, `Product.ts`; **Task** fields title, description, priority; **Contact** name/email required and email format in `ContactsPage.tsx`; **Product** seeded in `api.ts`. Do not add extra entities or validators — we use only these three entities for the workshop.
 
-**Expected / show:**
+**Deliverable:** Everyone agrees on the same three entities and where validation lives (client for Contact).
 
-- **Files:** `src/shared/Task.ts`, `src/shared/Contact.ts`, `src/shared/Product.ts`.
-- **Task:** `title`, `description`, `priority` (low|medium|high). No Remult validators in this repo; **UI** doesn’t submit empty title (form checks).
-- **Contact:** `name`, `email`, `phone`, `company`. **UI** validates: name and email required; email format regex in `ContactsPage.tsx` (~line 33).
-- **Product:** `name`, `description`, `price`, `category`, `inStock`. Products are seeded in `api.ts`; no client-side validation in ProductsPage.
+### Step 3 — Which UI flows we will automate (fixed list)
 
-**Takeaway:** Validation for contacts is in the **client** (ContactsPage); API accepts what’s sent. Negative tests can send invalid payloads to the API to see how the server responds.
+**Action:**
 
-### Step 3 — Identify 1–2 UI flows worth automating
+- [ ] Paste this exact prompt in Cursor:  
+  **“List the main user-facing flows on the Tasks and Contacts pages that would be good candidates for UI automation. Mention the page file and the main elements (buttons, inputs) by label or id if present.”**
+- [ ] From the answer, we use **only these two flows** for the workshop:  
+  (1) **Tasks** (`src/pages/TasksPage.tsx`): Add task (Title, Priority, Description → “Add Task”), filter All/Active/Completed, toggle complete (checkbox).  
+  (2) **Contacts** (`src/pages/ContactsPage.tsx`): Add contact (Name, Email, Phone, Company → “Add Contact” / “Update Contact”), search.  
+- [ ] Do **not** add edit/delete or other flows to the workshop list; everyone automates the same flows.
 
-**Prompt:**
+**Deliverable:** Everyone has the same two flows (Tasks add/filter/toggle; Contacts add/search).
 
-> “List the main user-facing flows on the Tasks and Contacts pages that would be good candidates for UI automation (e.g. add item, filter, edit, delete). Mention the page file and the main elements (buttons, inputs) by label or id if present.”
+### Step 4 — Lock the Test Targets list (everyone uses the same list)
 
-**Expected / show:**
+**Action:**
 
-1. **Tasks (`src/pages/TasksPage.tsx`):** Add task (form with “Title”, “Priority”, “Description”; submit “Add Task”), filter (All / Active / Completed), toggle complete (checkbox), Edit, Delete.
-2. **Contacts (`src/pages/ContactsPage.tsx`):** Add contact (form: Name, Email, Phone, Company; “Add Contact” / “Update Contact”), search, Edit, Delete (with confirm dialog).
+- [ ] Read the inlined **Test Targets** below as a group. This list is the single source of truth for what to automate in this workshop.
+- [ ] Do **not** add or remove items during the live session.
 
-### Step 4 — Create a “Test Targets” list
+**Deliverable:** Everyone aligned on the exact same test targets (no one adds “delete contact” or extra endpoints for the live session).
 
-**Action:** Use the list in the repo so the group has a single reference for the rest of the workshop.
+**Test Targets (source of truth for this workshop):**
 
-- [ ] Open **`docs/test-targets.md`** (already in the repo). Walk through each section: API endpoints, UI flows, risks.
-- [ ] Optionally add one or two items as the group suggests (e.g. “delete contact with confirm”).
+- **API (base URL: http://localhost:3002)**
+  - `GET /api/tasks`, `POST /api/tasks` — happy path + empty/invalid payload
+  - `GET /api/contacts`, `POST /api/contacts` — happy path + validation (e.g. missing name/email, bad email format)
+  - `GET /api/products` — list (products are seeded in `src/server/api.ts`)
+- **UI (base URL: http://localhost:5173)**
+  - Smoke: app loads, nav visible (Tasks | Contacts | Products)
+  - Tasks: add task -> appears in list; filter All/Active/Completed; toggle complete; edit; delete
+  - Contacts: add contact (required name/email); search; edit; delete (confirm dialog)
+- **Risks to cover**
+  - API: POST with missing required fields or invalid types
+  - UI: form validation messages (Contacts); empty states; filter and count updates
 
-**Deliverable:** Everyone aligned on what we’ll test and why (endpoints, UI actions, risks).
+### Step 5 — Blind challenge (prove codebase-only discovery works)
+
+**Action:**
+
+- [ ] Timebox to 3 minutes. Ask everyone to close browser devtools and avoid opening API docs/tools.
+- [ ] Paste this exact prompt in Cursor:  
+  **“Using only this repo’s code, produce: (1) a list of `/api/tasks` endpoints with methods and expected request fields, and (2) robust locators for the Tasks add form and task row interactions. Include exact file paths used as evidence.”**
+- [ ] Verify answers include path evidence (`src/server/api.ts`, `src/shared/Task.ts`, `src/pages/TasksPage.tsx`, `src/App.tsx`).
+
+**Deliverable:** Everyone demonstrates endpoint + locator discovery directly from source files.
 
 ---
 
 ## 0:15–0:30 — Playwright Bootstrap + First Passing Test
 
-Goal: Add **config** and **folder layout**, then write **one smoke test** that proves the app is reachable. Demonstrate generate → run → fix with Cursor.
+Goal: Add **config** and **folder layout**, then write **one smoke test** that proves the app is reachable. Everyone produces the same config and same test.
 
 **Prerequisite:** Playwright and browsers should already be installed (see [WORKSHOP-SETUP.md](./WORKSHOP-SETUP.md) section 5). If anyone skipped that, have them run: `npm install -D @playwright/test@latest` and `npx playwright install` now.
 
 ### Step 1 — Confirm Playwright + create test folder
 
-**Commands (from project root):**
+**Action:**
 
-```bash
-mkdir -p tests
-npx playwright --version
-```
+- [ ] From project root, run: `mkdir -p tests`
+- [ ] Run: `npx playwright --version` — it must print a version (e.g. `1.49.0`). If not, use setup doc section 5.
 
-**Expected:** Playwright version prints (e.g. `1.49.0`). If not, point to setup doc section 5.
+**Deliverable:** Folder `tests/` exists and Playwright version prints for everyone.
 
-### Step 2 — Playwright config
+### Step 2 — Add Playwright config (exact same file for everyone)
 
-**Prompt:**
+**Action:**
 
-> “Add a Playwright config file for this project: TypeScript, project root is the repo root, test directory is `tests`, use a baseURL of http://localhost:5173 for the UI. Config file should be playwright.config.ts in the project root.”
+- [ ] Paste this exact prompt in Cursor:  
+  **“Add `playwright.config.ts` in the repo root. Use TypeScript with `testDir: './tests'`, `baseURL: 'http://localhost:5173'`, and one Chromium project. Do not configure `webServer` because the app and API are started separately before tests.”**
+- [ ] Confirm the file **`playwright.config.ts`** exists at the repo root and contains `baseURL: 'http://localhost:5173'` and `testDir: './tests'`. If baseURL is wrong or missing, prompt: **“Set baseURL to http://localhost:5173 in playwright.config.ts.”**
 
-**Expected file:** `playwright.config.ts` (root) with something like:
+**Compare your code to:**
 
 ```ts
 import { defineConfig, devices } from '@playwright/test';
@@ -121,254 +160,281 @@ export default defineConfig({
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:5173',
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000,
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
 ```
 
-**If baseURL is missing or wrong:** Ask Cursor to “set baseURL to http://localhost:5173 in playwright.config.ts”.
+**Deliverable:** Everyone has the same `playwright.config.ts` with the same baseURL and testDir.
 
-### Step 3 — First smoke test
+### Step 3 — First smoke test (exact same test for everyone)
 
-**Prompt:**
+**Action:**
 
-> “In the tests folder, create a smoke test file that: 1) goes to the baseURL (path '/'), 2) expects the page to have the text 'QA Workshop' (the nav brand), and 3) expects to see the navigation buttons Tasks, Contacts, Products. Use the role or text that matches the real UI. File name: tests/smoke.spec.ts.”
+- [ ] Paste this exact prompt in Cursor:  
+  **“In `tests/smoke.spec.ts`, create one smoke test that goes to `'/'`, scopes to the navigation landmark, and asserts nav brand text plus buttons Tasks/Contacts/Products are visible. Use role-based locators with `const nav = page.getByRole('navigation')` and assert within `nav`.”**
+- [ ] Confirm the file **`tests/smoke.spec.ts`** exists and the test title is **“app loads and nav is visible”** (or equivalent). Keep selectors scoped to `page.getByRole('navigation')`.
 
-**Expected file:** `tests/smoke.spec.ts` (or similar), e.g.:
+**Deliverable:** Everyone has the same `tests/smoke.spec.ts` with one test that checks “QA Workshop” and the three nav buttons.
+
+**Compare your code to:**
 
 ```ts
 import { test, expect } from '@playwright/test';
 
 test('app loads and nav is visible', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /QA Workshop/i }).or(
-    page.getByText('QA Workshop')
-  )).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Tasks' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Contacts' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Products' })).toBeVisible();
+  const nav = page.getByRole('navigation');
+  await expect(nav.getByText('QA Workshop')).toBeVisible();
+  await expect(nav.getByRole('button', { name: 'Tasks' })).toBeVisible();
+  await expect(nav.getByRole('button', { name: 'Contacts' })).toBeVisible();
+  await expect(nav.getByRole('button', { name: 'Products' })).toBeVisible();
 });
 ```
 
-**Note:** Nav brand in the repo is a `<div className="nav-brand">QA Workshop</div>`, so it may be found by text. If the generated test uses a heading, adjust: the app has “QA Workshop” in the navbar and “Tasks” / “Contacts” / “Products” as buttons.
+### Step 4 — Run smoke test (everyone runs the same command)
 
-### Step 4 — Run and fix (augmented loop)
+**Action:**
 
-**Commands:**
+- [ ] Ensure app and API are already running (`npm run dev` and `npm run dev-node` in separate terminals), then run from repo root: **`npx playwright test tests/smoke.spec.ts`**.
+- [ ] If it fails: (1) Timeout → verify UI is reachable at http://localhost:5173 and API at http://localhost:3002. (2) Selector not found → prompt Cursor: **“Scope the smoke test assertions to `page.getByRole('navigation')` and use role-based button locators.”** Re-run until it passes.
 
-```bash
-# Ensure UI is running: npm run dev (Terminal A) and npm run dev-node (Terminal B)
-npx playwright test tests/smoke.spec.ts
-```
-
-**If it fails:**
-
-- **Timeout / page not loading:** Confirm UI is at http://localhost:5173 and API at 3002; `baseURL` in config is correct.
-- **Selector not found:** Open `src/App.tsx` and point out: nav brand is `<div className="nav-brand">QA Workshop</div>`, links are `<button>Tasks</button>`, etc. Prompt: “Update the smoke test to use getByText('QA Workshop') and getByRole('button', { name: 'Tasks' }) to match App.tsx.”
-
-**Deliverable:** One passing Playwright test (`npx playwright test tests/smoke.spec.ts`).
+**Deliverable:** One passing Playwright test; everyone ran the same command and got a pass.
 
 ---
 
 ## 0:30–0:45 — Locators Without Opening a Browser + First Page Object
 
-Goal: Derive locators from React and accessibility (role/label first); create a Page Object and a UI test; **then** add `data-testid` to the app and **update the POM** to use them (illustrate the augmented loop: codebase change → POM update).
+Goal: Derive locators from the codebase; create the **same** Page Object and UI test; add **the same** `data-testid`s; update the POM to use them. Everyone ends up with the same files and same test data.
 
-### Step 1 — Derive locators from the codebase
+### Step 1 — Derive locators (everyone uses the same selectors)
 
-**Prompt:**
+**Action:**
 
-> “Look at src/App.tsx and src/pages/TasksPage.tsx. List the best selectors for: (1) the Tasks nav button, (2) the 'Add New Task' form title, (3) the task title input, (4) the priority dropdown, (5) the Add Task submit button, (6) the first task row's checkbox. Prefer role and label (aria-label or associated label). Only suggest data-testid if there's no good role/label.”
+- [ ] Paste this exact prompt in Cursor:  
+  **“Look at `src/App.tsx` and `src/pages/TasksPage.tsx`. List robust selectors for a Tasks POM using constructor locator fields: Tasks nav button, add-task form, title input, description input, priority dropdown, Add Task button, and task rows. Prefer role/label/testid. If task rows do not have a testid yet, use `.locator('.task-item')` as a temporary selector until we add one.”**
+- [ ] Confirm we will use these selectors in the POM constructor: `getByRole('button', { name: 'Tasks' })`, `getByLabel('Title')`, `getByLabel('Description')`, `getByLabel('Priority')`, `getByRole('button', { name: 'Add Task' })`, and temporary `locator('.task-item')` until testids are added.
 
-**Expected / show:**
+**Deliverable:** Everyone has the same selector list for the Tasks page.
 
-- **Tasks nav:** `getByRole('button', { name: 'Tasks' })` — from App.tsx.
-- **Form title:** `getByRole('heading', { name: 'Add New Task' })` — TasksPage has `<h3>Add New Task</h3>`.
-- **Task title input:** `getByLabel('Title')` or `getByRole('textbox', { name: 'Title' })` — `<label htmlFor="task-title">Title</label>` and `id="task-title"`.
-- **Priority:** `getByLabel('Priority')` or `getByRole('combobox', { name: 'Priority' })` — `id="task-priority"`.
-- **Add Task button:** `getByRole('button', { name: 'Add Task' })`.
-- **Task list / checkbox:** For the list we can use `.locator('.task-item')` (class from the code); for a specific row or checkbox we might add `data-testid` later for stability.
+### Step 2 — Create the first Page Object (exact same file for everyone)
 
-### Step 2 — Create the first Page Object (role/label only, no testids yet)
+**Action:**
 
-**Prompt:**
+- [ ] Paste this exact prompt in Cursor:  
+  **“Create `tests/pages/TasksPage.ts` with a `TasksPageObject` class using the constructor locator model: define readonly `Locator` fields in the constructor (`tasksNavButton`, `addTaskForm`, `titleInput`, `descriptionInput`, `prioritySelect`, `addTaskButton`, `taskItems`). Add methods: `goto()`, `addTask(title, description?, priority?)`, `getTaskItems()`, `taskRowByTitle(title)`, and `taskCheckboxByTitle(title)`.”**
+- [ ] Confirm the file **`tests/pages/TasksPage.ts`** exists and exports **`TasksPageObject`** with constructor locator fields and those methods.
 
-> “Create a Page Object for the Tasks page. File: tests/pages/TasksPage.ts. It should: (1) take a Playwright Page in the constructor, (2) have goto() that goes to '/' and clicks the Tasks nav button, (3) have addTask(title, description?, priority?), getTaskItems(), getFirstTaskCheckbox(). Use only role and label selectors from the app: getByLabel('Title'), getByLabel('Description'), getByLabel('Priority'), getByRole('button', { name: 'Add Task' }). For the task list use .locator('.task-item') since we don't have data-testid yet. Match src/pages/TasksPage.tsx.”
-
-**Expected (conceptual):**
+**Compare your code to (initial POM, before testids):**
 
 ```ts
-// tests/pages/TasksPage.ts
-import type { Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 export class TasksPageObject {
-  constructor(private readonly page: Page) {}
+  readonly tasksNavButton: Locator;
+  readonly addTaskForm: Locator;
+  readonly titleInput: Locator;
+  readonly descriptionInput: Locator;
+  readonly prioritySelect: Locator;
+  readonly addTaskButton: Locator;
+  readonly taskItems: Locator;
+
+  constructor(private readonly page: Page) {
+    this.tasksNavButton = page.getByRole('button', { name: 'Tasks' });
+    this.addTaskForm = page.locator('form').filter({ has: page.getByRole('heading', { name: 'Add New Task' }) });
+    this.titleInput = page.getByLabel('Title');
+    this.descriptionInput = page.getByLabel('Description');
+    this.prioritySelect = page.getByLabel('Priority');
+    this.addTaskButton = page.getByRole('button', { name: 'Add Task' });
+    this.taskItems = page.locator('.task-item');
+  }
 
   async goto() {
     await this.page.goto('/');
-    await this.page.getByRole('button', { name: 'Tasks' }).click();
+    await this.tasksNavButton.click();
+    await expect(this.addTaskForm).toBeVisible();
   }
 
   async addTask(title: string, description = '', priority: 'low' | 'medium' | 'high' = 'medium') {
-    await this.page.getByLabel('Title').fill(title);
-    if (description) await this.page.getByLabel('Description').fill(description);
-    await this.page.getByLabel('Priority').selectOption(priority);
-    await this.page.getByRole('button', { name: 'Add Task' }).click();
+    await this.titleInput.fill(title);
+    await this.descriptionInput.fill(description);
+    await this.prioritySelect.selectOption(priority);
+    await this.addTaskButton.click();
   }
 
   getTaskItems() {
-    return this.page.locator('.task-item');
+    return this.taskItems;
   }
 
-  getFirstTaskCheckbox() {
-    return this.page.getByRole('checkbox').first();
+  taskRowByTitle(title: string) {
+    return this.taskItems.filter({ has: this.page.getByText(title, { exact: true }) }).first();
+  }
+
+  taskCheckboxByTitle(title: string) {
+    return this.taskRowByTitle(title).getByRole('checkbox');
   }
 }
 ```
 
-### Step 3 — UI test using the Page Object
+**Deliverable:** Everyone has the same `tests/pages/TasksPage.ts` and same class name.
 
-**Prompt:**
+### Step 3 — UI test using the Page Object (exact same test for everyone)
 
-> “Add a test in tests/tasks.spec.ts that: uses the TasksPage Page Object, calls goto(), then addTask('Workshop task', 'From Playwright', 'high'), then expects at least one task row to be visible and to contain the text 'Workshop task'. Use the same tests folder and playwright config.”
+**Action:**
 
-**Expected:** `tests/tasks.spec.ts` that imports the page object, uses it, and asserts on “Workshop task”. Run:
+- [ ] Paste this exact prompt in Cursor:  
+  **“Add a test in `tests/tasks.spec.ts` that uses `TasksPageObject`, calls `goto()`, records initial row count, adds `Workshop task` with description `From Playwright` and priority `high`, then asserts row count increases by 1 and `taskRowByTitle('Workshop task')` is visible.”**
+- [ ] Confirm the file **`tests/tasks.spec.ts`** exists and the test uses **title 'Workshop task'**, **description 'From Playwright'**, **priority 'high'**. Do not change these strings — everyone’s test must use the same data.
+- [ ] Run: **`npx playwright test tests/tasks.spec.ts`** and fix until it passes.
 
-```bash
-npx playwright test tests/tasks.spec.ts
-```
+**Deliverable:** Everyone has the same `tests/tasks.spec.ts` with the same task title/description/priority and a passing test.
 
-Confirm it passes. **Talking point:** The POM works with role/label and one class-based locator. Next we’ll add testids to the app and refactor the POM to use them.
-
-### Step 4 — Add data-testid to the app (AI updates source)
-
-**Prompt:**
-
-> “In src/pages/TasksPage.tsx add data-testid attributes so tests can target key elements reliably: (1) data-testid='task-item' on the outer div of each task row (the div with className task-item), (2) data-testid='add-task-form' on the Add New Task form element. Keep all existing labels and ids.”
-
-**Expected changes:**
-
-- In the task list `.map`, the outer `<div key={task.id} className={\`task-item ...\`}>` gets `data-testid="task-item"`.
-- The `<form className="form-card" onSubmit={addTask}>` that contains “Add New Task” gets `data-testid="add-task-form"`.
-
-**Talking point:** We’re changing the **product** code so tests have stable hooks. The AI can add testids in one go; we only add them where we need them (list items, form), not everywhere.
-
-### Step 5 — Update the POM to use the new testids (AI updates tests)
-
-**Prompt:**
-
-> “Update tests/pages/TasksPage.ts to use the data-testid we added: (1) getTaskItems() should use getByTestId('task-item') instead of .locator('.task-item'). (2) Add a method getAddTaskForm() that returns the form using getByTestId('add-task-form'). Keep all other selectors (role/label) as they are.”
-
-**Expected (conceptual):**
+**Compare your code to (add-task test in tests/tasks.spec.ts):**
 
 ```ts
-getTaskItems() {
-  return this.page.getByTestId('task-item');
-}
+import { test, expect } from '@playwright/test';
+import { TasksPageObject } from './pages/TasksPage';
 
-getAddTaskForm() {
-  return this.page.getByTestId('add-task-form');
-}
+test('add task and see it in list', async ({ page }) => {
+  const tasksPage = new TasksPageObject(page);
+  await tasksPage.goto();
+  const initialCount = await tasksPage.getTaskItems().count();
+  await tasksPage.addTask('Workshop task', 'From Playwright', 'high');
+  await expect(tasksPage.getTaskItems()).toHaveCount(initialCount + 1);
+  await expect(tasksPage.taskRowByTitle('Workshop task')).toBeVisible();
+});
 ```
 
-Run the tests again:
+### Step 4 — Add data-testid to the app (exact same attributes for everyone)
 
-```bash
-npx playwright test tests/tasks.spec.ts
+**Action:**
+
+- [ ] Paste this exact prompt in Cursor:  
+  **“In src/pages/TasksPage.tsx add data-testid attributes: (1) data-testid='task-item' on the outer div of each task row (the div with className task-item), (2) data-testid='add-task-form' on the Add New Task form element. Keep all existing labels and ids.”**
+- [ ] Verify **only these two** testids were added: **`data-testid="task-item"`** on the task row div, **`data-testid="add-task-form"`** on the form. No other data-testid in this file.
+
+**Deliverable:** Everyone has the same two testids in `TasksPage.tsx`.
+
+### Step 5 — Update the POM to use the new testids (everyone makes the same change)
+
+**Action:**
+
+- [ ] Paste this exact prompt in Cursor:  
+  **“Update `tests/pages/TasksPage.ts` to use testids: `addTaskForm = page.getByTestId('add-task-form')` and `taskItems = page.getByTestId('task-item')`. Keep constructor locator fields, and keep `taskRowByTitle(title)` / `taskCheckboxByTitle(title)` targeting rows by title rather than index.”**
+- [ ] Run: **`npx playwright test tests/tasks.spec.ts`** — it must still pass.
+
+**Deliverable:** Everyone’s POM uses `getByTestId('task-item')` and `getByTestId('add-task-form')` in constructor locator fields; same passing test.
+
+**Compare your code to (after adding testids — these constructor assignments in the POM):**
+
+```ts
+this.addTaskForm = page.getByTestId('add-task-form');
+this.taskItems = page.getByTestId('task-item');
 ```
-
-**Deliverable:** Page Object + UI test; then **app has testids** and **POM is updated** to use them — illustrating that the system can both add testids and update the POM.
 
 ---
 
 ## 0:45–1:00 — API Tests Without Swagger/Postman
 
-Goal: Use the server code to know request/response shape; add Playwright API tests (request context); one happy-path and one negative/validation test.
+Goal: Add **two** Playwright API tests for `/api/tasks`: one happy path, one negative. Everyone uses the same file name, same test names, and same assertions.
 
-### Step 1 — Discover request/response shape from server code
+### Step 1 — Agree on request/response shape (everyone uses the same)
 
-**Prompt:**
+**Action:**
 
-> “For the Remult API in this repo: what is the exact JSON body to POST a new task to /api/tasks and what does the API return? Same for POST /api/contacts. Use src/shared/Task.ts and Contact.ts and the Remult docs if needed.”
+- [ ] Paste this exact prompt in Cursor:  
+  **“For the Remult API in this repo: what is the exact JSON body to POST a new task to /api/tasks and what does the API return? Use src/shared/Task.ts.”**
+- [ ] Confirm we use **only** POST body: `title`, `description`, `priority` ('low'|'medium'|'high'). Response has `id` and `title`. Do not add Contact or Product in this step — we test only tasks.
 
-**Expected:**
+**Deliverable:** Everyone agrees on the same request shape and response fields for POST /api/tasks.
 
-- **POST /api/tasks**  
-  Body: `{ "title": "string", "description": "string", "completed": boolean?, "priority": "low"|"medium"|"high" }`.  
-  Returns: created entity (with `id`, `createdAt`, etc.).
-- **POST /api/contacts**  
-  Body: `{ "name", "email", "phone", "company" }`.  
-  Returns: created contact with `id`.  
-  (Validation: client-side only in this app; API may still accept invalid data — we can test that.)
+### Step 2 — Create API test file (exact same tests for everyone)
 
-### Step 2 — Playwright API test file and base URL for API
+**Action:**
 
-**Prompt:**
+- [ ] Paste this exact prompt in Cursor:  
+  **“Create `tests/api/tasks.api.spec.ts`. Use `APIRequestContext` with `playwright.request.newContext({ baseURL: 'http://localhost:3002' })` in `beforeAll`, dispose in `afterAll`. Add two tests: (1) `POST /api/tasks - happy path` with body `{ title: 'API task', description: 'From API test', priority: 'high' }`, expect status 201 and response with numeric `id` and exact title. (2) `GET /api/tasks/:id - missing task` using id `999999`, expect 404. Keep `failOnStatusCode: false` for the negative request.”**
+- [ ] Confirm the file **`tests/api/tasks.api.spec.ts`** exists with those two tests and explicit status assertions (201 and 404).
 
-> “Create tests/api/tasks.api.spec.ts. Use Playwright's request context (request fixture or request.newContext) to call the API at base URL http://localhost:3002. Write two tests: (1) happy path: POST /api/tasks with valid body { title: 'API task', description: 'From API test', priority: 'high' }, expect status 201 and response body to have id and title 'API task'. (2) negative: POST /api/tasks with empty title { title: '', description: 'x', priority: 'medium' }, and assert that the response status is not 2xx (e.g. 400 or 422) or that the response indicates an error. Use the actual Remult API base URL and path /api/tasks.”
-
-**Expected (conceptual):**
+**Compare your code to:**
 
 ```ts
-// tests/api/tasks.api.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect, playwright, type APIRequestContext } from '@playwright/test';
 
-const API_BASE = 'http://localhost:3002';
+let api: APIRequestContext;
 
-test('POST /api/tasks - happy path', async ({ request }) => {
-  const res = await request.post(`${API_BASE}/api/tasks`, {
+test.beforeAll(async () => {
+  api = await playwright.request.newContext({ baseURL: 'http://localhost:3002' });
+});
+
+test.afterAll(async () => {
+  await api.dispose();
+});
+
+test('POST /api/tasks - happy path', async () => {
+  const response = await api.post('/api/tasks', {
     data: { title: 'API task', description: 'From API test', priority: 'high' },
   });
-  expect(res.ok()).toBeTruthy();
-  const body = await res.json();
-  expect(body).toHaveProperty('id');
+  expect(response.status()).toBe(201);
+  const body = await response.json();
+  expect(body.id).toEqual(expect.any(Number));
   expect(body.title).toBe('API task');
 });
 
-test('POST /api/tasks - empty title rejected or error', async ({ request }) => {
-  const res = await request.post(`${API_BASE}/api/tasks`, {
-    data: { title: '', description: 'x', priority: 'medium' },
-  });
-  // Remult may return 201 with empty title; if so, change assertion to match real behavior
-  expect(res.status()).not.toBe(201);
-  // or: const body = await res.json(); expect(body.error or status).toBeDefined();
+test('GET /api/tasks/:id - missing task', async () => {
+  const response = await api.get('/api/tasks/999999', { failOnStatusCode: false });
+  expect(response.status()).toBe(404);
 });
 ```
 
-**Note:** If Remult actually allows empty title, adjust the negative test to something the server does reject (e.g. invalid type or a field that Remult validates). Optionally add a contact validation test: POST with invalid email and assert non-2xx or error message.
+**Deliverable:** Everyone has the same `tests/api/tasks.api.spec.ts` with the same two test names and assertions.
 
-### Step 3 — Run API tests
+### Step 3 — Run API tests (everyone runs the same command)
 
-**Command:**
+**Action:**
 
-```bash
-npx playwright test tests/api/
-```
+- [ ] Run: **`npx playwright test tests/api/`**
+- [ ] Fix any failures (e.g. wrong base URL or assertion) so both tests pass. Keep test names and assertions identical across the room.
 
-Ensure API server is running (`npm run dev-node`). If tests are not in a separate project, they might pick up `baseURL`; API tests should use `http://localhost:3002` explicitly.
+**Deliverable:** Everyone ran the same command and has two passing API tests.
 
-**Deliverable:** At least two API tests under `tests/api/` (one happy path, one negative/validation).
+### Step 4 — Add schema-derived contract assertions
+
+**Action:**
+
+- [ ] Paste this exact prompt in Cursor:  
+  **“Update `tests/api/tasks.api.spec.ts` to add contract assertions derived from `src/shared/Task.ts`: in the happy-path POST response, assert `id` is number, `title` and `description` are strings, `priority` is one of `low|medium|high`, and `completed` is boolean.”**
+- [ ] Confirm contract assertions are type/shape focused and come from the entity schema (not guessed from external docs).
+- [ ] Re-run: **`npx playwright test tests/api/tasks.api.spec.ts`**
+
+**Deliverable:** API tests now check both status and schema-derived response contract.
 
 ---
 
 ## 1:00–1:10 — Data Factories + Seeding Helpers
 
-Goal: One factory with valid defaults and overrides; one seed helper that creates N records via the API; use them in at least one test.
+Goal: One **task** factory and one **seed helper** for tasks; use them in **one** test that seeds **exactly 3** tasks. Everyone uses the same file names, same default values, and same seed count.
 
-### Step 1 — Data factory
+### Step 1 — Create task factory (exact same file for everyone)
 
-**Prompt:**
+**Action:**
 
-> “Create a test data factory for Task and Contact. File: tests/factories/task.ts (and contact.ts if you want). For Task: default values title 'Test Task', description '', priority 'medium'. For Contact: name 'Test User', email 'test@example.com', phone '', company 'Acme'. Export a function that accepts partial overrides and returns the full object. Use the same field names and types as in src/shared/Task.ts and Contact.ts.”
+- [ ] Paste this exact prompt in Cursor: **"Create `tests/factories/task.ts` with a typed `TaskInput` and `buildTask(overrides?: Partial<TaskInput>): TaskInput`. Defaults: title `'Test Task'`, description `''`, priority `'medium'` (`'low' | 'medium' | 'high'`)."**
+- [ ] Confirm the file **`tests/factories/task.ts`** exists and exports **`buildTask`** with exactly those defaults. Do not add a Contact factory in this step — we use only the task factory for the workshop.
 
-**Expected (conceptual):**
+**Compare your code to:**
 
 ```ts
-// tests/factories/task.ts
-import type { Task } from '../../src/shared/Task';
+export type TaskInput = {
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+};
 
-export function buildTask(overrides: Partial<Pick<Task, 'title' | 'description' | 'priority'>> = {}): { title: string; description: string; priority: string } {
+export function buildTask(overrides: Partial<TaskInput> = {}): TaskInput {
   return {
     title: 'Test Task',
     description: '',
@@ -378,69 +444,99 @@ export function buildTask(overrides: Partial<Pick<Task, 'title' | 'description' 
 }
 ```
 
-(Contact factory similar: `buildContact(overrides)` with name, email, phone, company.)
+**Deliverable:** Everyone has the same `tests/factories/task.ts` and same default values.
 
-### Step 2 — Seeding helper (create N via API)
+### Step 2 — Create seed helper (exact same file for everyone)
 
-**Prompt:**
+**Action:**
 
-> “Create a seed helper tests/helpers/seed.ts that: (1) takes a Playwright APIRequestContext (or fetch), base URL http://localhost:3002, and (2) has a function seedTasks(count: number, overrides?: partial task) that POSTs to /api/tasks count times using the task factory and returns the created tasks (or their ids). Use the task factory we created so tests are readable and repeatable.”
+- [ ] Paste this exact prompt in Cursor: **"Create `tests/helpers/seed.ts`. Export `seedTasks(api: APIRequestContext, count: number, overrides?: Partial<TaskInput>)`. Use `buildTask` from `tests/factories/task.ts`, POST to `/api/tasks`, and fail fast on non-201 responses. Return created tasks with `{ id, title }`."**
+- [ ] Confirm the file **`tests/helpers/seed.ts`** exists and exports **`seedTasks`** with typed parameters/return shape.
 
-**Expected (conceptual):**
+**Compare your code to (shape of seed helper):**
 
 ```ts
-// tests/helpers/seed.ts
-import { request } from '@playwright/test';
-import { buildTask } from '../factories/task';
-
-const API_BASE = 'http://localhost:3002';
+import { expect, type APIRequestContext } from '@playwright/test';
+import { buildTask, type TaskInput } from '../factories/task';
 
 export async function seedTasks(
-  requestContext: { post: (url: string, opts: { data: unknown }) => Promise<{ ok: () => boolean; json: () => Promise<{ id: number }> }> },
+  api: APIRequestContext,
   count: number,
-  overrides?: Partial<ReturnType<typeof buildTask>>
+  overrides: Partial<TaskInput> = {}
 ) {
-  const created: { id: number }[] = [];
+  const created: { id: number; title: string }[] = [];
   for (let i = 0; i < count; i++) {
-    const body = buildTask(overrides ?? { title: `Seed task ${i + 1}` });
-    const res = await requestContext.post(`${API_BASE}/api/tasks`, { data: body });
-    if (res.ok()) created.push(await res.json());
+    const body = buildTask({
+      title: `Seed task ${i + 1}`,
+      ...overrides,
+    });
+    const response = await api.post('/api/tasks', { data: body });
+    expect(response.status(), `seed task ${i + 1}`).toBe(201);
+    created.push(await response.json());
   }
   return created;
 }
 ```
 
-(Adjust to match your factory and request API; e.g. use the `request` fixture in the test and pass it in.)
+(You'll need to import `buildTask` from your task factory.)
 
-### Step 3 — Use in a test
+**Deliverable:** Everyone has the same `tests/helpers/seed.ts` and same helper signature.
 
-**Prompt:**
+### Step 3 — Add test that uses factory + seed (exact same test for everyone)
 
-> “In tests/tasks.spec.ts (or a new test file), add a test that: uses the seed helper to create 3 tasks via the API, then opens the Tasks page in the browser, and expects to see at least 3 task rows (or expects one of the seeded task titles). Use the TasksPage Page Object and the seed helper.”
+**Action:**
 
-**Deliverable:** Factory + seed helper used by at least one test; tests readable and repeatable.
+- [ ] Paste this exact prompt in Cursor: **"In `tests/tasks.spec.ts`, add a test that creates an API request context (`baseURL: 'http://localhost:3002'`), calls `seedTasks(api, 3, { title: 'Seed task workshop' })`, opens Tasks via `TasksPageObject.goto()`, and asserts exactly 3 rows containing `'Seed task workshop'` are visible. Dispose the API context at the end of the test."**
+- [ ] Confirm the new test seeds **exactly 3** tasks and asserts **exactly 3 matching rows** for the seeded title.
+- [ ] Run: **`npx playwright test tests/tasks.spec.ts`** and fix until all tests pass.
+
+**Deliverable:** Everyone has the same test that seeds 3 tasks and asserts 3 rows; all tests pass.
+
+### Step 4 — Add one more factory from schema (Contact)
+
+**Action:**
+
+- [ ] Paste this exact prompt in Cursor: **"Create `tests/factories/contact.ts` from `src/shared/Contact.ts` and `src/pages/ContactsPage.tsx` validation rules. Export `buildContact(overrides?)` with defaults that satisfy required fields: `name`, `email`, plus optional `phone`, `company`."**
+- [ ] Confirm the factory reflects codebase rules (name/email required, email format-valid default).
+- [ ] Do not add tests for this factory now; this step is to prove schema-informed factory generation from source.
+
+**Deliverable:** Team demonstrates factory creation from schema + validation code, not manual guesswork.
 
 ---
 
 ## 1:10–1:15 — One End-to-End Scenario + Recap
 
-Goal: One E2E test: seed via API → verify in UI → perform action → assert. Recap the workflow.
+Goal: One E2E test that **everyone** writes the same way: seed one task via API → open Tasks in UI → verify → toggle complete → assert. Then recap.
 
-### E2E test
+### Step 1 — Add E2E test (exact same flow for everyone)
 
-**Prompt:**
+**Action:**
 
-> “Add one end-to-end test: (1) seed a single task via the API with a unique title like 'E2E task <timestamp>', (2) open the UI and go to Tasks, (3) verify the task appears in the list, (4) toggle its checkbox to complete, (5) assert that the task row has a completed state or that the 'remaining' count decreased. Use the request fixture for seeding and the Tasks page object for UI. File: tests/e2e/task-flow.spec.ts or in tests/tasks.spec.ts.”
+- [ ] Paste this exact prompt in Cursor: **"Add one E2E test in `tests/tasks.spec.ts`: seed one task via API with title exactly `'E2E task'`, open UI and go to Tasks using `TasksPageObject`, verify `taskRowByTitle('E2E task')` is visible, click `taskCheckboxByTitle('E2E task')`, then assert that row has class containing `'completed'`. Use an API request context and dispose it in the test."**
+- [ ] Confirm the test uses exactly the title **'E2E task'** and file **tests/tasks.spec.ts**. Run **`npx playwright test tests/tasks.spec.ts`** until all pass.
 
-**Expected flow:** Seed → goto Tasks → assert text visible → click first checkbox (or the one matching the title) → assert completed state or badge count.
+**Deliverable:** Everyone has the same E2E test with the same title and same file.
 
-### Recap (talking points)
+### Step 2 — Change-resilience drill (source changes, tests adapt)
 
-- **Codebase as source of truth:** We used server and client code to decide API paths, request bodies, and locators (role/label first).
-- **Loop:** Generate tests with Cursor → run → fix from errors and code.
-- **Layers:** API tests for speed and stability; UI tests for critical flows; E2E for one full path; factories and seed for repeatable data.
+**Action:**
 
-**Deliverable:** One E2E test plus a clear mental model to reuse at work.
+- [ ] Timebox to 3 minutes. Make one tiny source change in `src/pages/TasksPage.tsx` (example: change add-form heading text from “Add New Task” to “Create Task”).
+- [ ] Paste this exact prompt in Cursor: **"A UI label changed in `src/pages/TasksPage.tsx`. Update the Tasks Page Object and tests to restore passing behavior using source-driven locators, not brittle text-only assumptions."**
+- [ ] Re-run: **`npx playwright test tests/tasks.spec.ts`**
+
+**Deliverable:** Everyone sees tests repaired by reading code changes directly, without browser/inspector discovery.
+
+### Step 3 — Recap (everyone hears the same takeaways)
+
+**Action:**
+
+- [ ] Read aloud: **Codebase as source of truth** — we used server and client code for API paths, request bodies, and locators (role/label first).
+- [ ] Read aloud: **Loop** — generate tests with Cursor, run, fix from errors and code.
+- [ ] Read aloud: **Layers** — API tests for speed; UI tests for critical flows; E2E for one full path; factories and seed for repeatable data.
+- [ ] Read aloud: **Proof point** — we completed blind discovery, schema-derived contracts/factories, and a change-resilience drill without Swagger or inspector.
+
+**Deliverable:** One E2E test plus the same mental model for everyone.
 
 ---
 
@@ -457,7 +553,7 @@ Goal: One E2E test: seed via API → verify in UI → perform action → assert.
 
 - **Prompts:** Be specific (file paths, entity names, selectors from our repo); ask for one change at a time when fixing.
 - **Reviewing AI output:** Run tests immediately; use real selectors from the codebase; prefer role/label over fragile class or index.
-- **Stability:** Page Objects and factories isolate changes; avoid raw selectors in multiple specs.
+- **Stability:** Use constructor locator fields in Page Objects and typed factories/helpers; avoid raw selectors in multiple specs.
 
 ## 1:25–1:30 — Advanced / bonus
 

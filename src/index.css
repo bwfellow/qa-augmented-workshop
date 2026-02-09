@@ -1,83 +1,48 @@
-@charset "utf-8";
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-warning: #f59e0b;
+  --color-bg: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
 
 body {
-  font-family: Arial;
-  background-color: whitesmoke;
-  justify-content: center;
-  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1 {
-  color: #ef4444;
-  font-style: italic;
-  font-size: 3.75rem;
-  font-weight: inherit;
-  text-align: center;
+#root {
+  min-height: 100vh;
 }
 
-main {
-  max-width: 500px;
-  min-width: 300px;
-  margin: auto;
-  background-color: white;
-  box-sizing: border-box;
-  border: 1px solid lightgray;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px #0003, 0 25px 50px #0000001a;
-}
-
-main > div,
-main > form {
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid lightgray;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  justify-content: space-between;
-}
-
-main > div:has(input[type="checkbox"]) {
-  justify-content: inherit;
-}
-
-input {
-  font-family: inherit;
-  font-size: 100%;
-  width: 100%;
-  border: 0;
-}
-
-input:checked + input {
-  text-decoration: line-through;
-}
-
-input:placeholder-shown {
-  font-style: italic;
-}
-
-input[type="checkbox"] {
-  width: 36px;
-  height: 36px;
-  height: 1.5rem;
-}
-
+input,
+select,
+textarea,
 button {
-  cursor: pointer;
-  padding: 0.5rem 0.5rem;
-  background-color: white;
   font-family: inherit;
-  font-size: 85%;
-  line-height: inherit;
-  border: 2px solid #0000001a;
-  border-radius: 0.5rem;
-  white-space: nowrap;
-}
-
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 500px;
-  min-width: 300px;
-  margin: auto;
+  font-size: inherit;
 }

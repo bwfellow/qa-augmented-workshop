@@ -1,35 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { remult } from "remult";
+import { TasksPage } from "./pages/TasksPage";
+import { ContactsPage } from "./pages/ContactsPage";
+import { ProductsPage } from "./pages/ProductsPage";
+import "./App.css";
+
+remult.apiClient.url = "/api";
+
+type Page = "tasks" | "contacts" | "products";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState<Page>("tasks");
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="app">
+      <nav className="navbar">
+        <div className="nav-brand">QA Workshop</div>
+        <div className="nav-links">
+          <button
+            className={page === "tasks" ? "active" : ""}
+            onClick={() => setPage("tasks")}
+          >
+            Tasks
+          </button>
+          <button
+            className={page === "contacts" ? "active" : ""}
+            onClick={() => setPage("contacts")}
+          >
+            Contacts
+          </button>
+          <button
+            className={page === "products" ? "active" : ""}
+            onClick={() => setPage("products")}
+          >
+            Products
+          </button>
+        </div>
+      </nav>
+      <main className="main-content">
+        {page === "tasks" && <TasksPage />}
+        {page === "contacts" && <ContactsPage />}
+        {page === "products" && <ProductsPage />}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
